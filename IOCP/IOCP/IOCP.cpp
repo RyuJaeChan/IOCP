@@ -5,6 +5,7 @@ SocketInfo::SocketInfo(TCPSocket sock) : sock(sock)
 {
 }
 
+
 IoData::IoData()
 {
 }
@@ -12,12 +13,11 @@ IoData::IoData()
 IoData::IoData(IoDataMode mode) :OVERLAPPED({ 0 }), wsaBuf({ BUF_SIZE, buff }), mode(mode)
 {
 }
-/*
 
 IoData::~IoData()
 {
 }
-*/
+
 
 IOCP::IOCP() : tcpSocket(std::make_shared<TCPSocket>())
 {
@@ -76,16 +76,12 @@ void IOCP::IoCompletionWork()
 		SocketInfo* socketInfo;
 		IoData* ioData;
 
-		//LPSOCKET_INFO socketInfo;
-		//LPIO_DATA ioData;
-
 		GetQueuedCompletionStatus(
 			comPort,
 			&bytesTrans,
 			(LPDWORD)&socketInfo,
 			(LPOVERLAPPED*)&ioData,
 			INFINITE);
-
 
 		fprintf(stdout, "after evt recv : %s\n", ioData->wsaBuf.buf);
 		TCPSocket clientSocket = socketInfo->sock;
@@ -119,12 +115,7 @@ void IOCP::IoCompletionWork()
 				ioData,
 				NULL);
 		}
-
-
-
 	}
-
-
 }
 
 void IOCP::InitIocp()
@@ -156,7 +147,6 @@ bool IOCP::RunServer(UINT16 portNum)
 
 	tcpSocket->SetSocket(WSASocketW(AF_INET, SOCK_STREAM, 0, NULL, 0, WSA_FLAG_OVERLAPPED));
 
-
 	if (!tcpSocket->Bind(portNum))
 	{
 		return false;
@@ -173,11 +163,10 @@ bool IOCP::RunServer(UINT16 portNum)
 	return true;
 }
 
-void IOCP::Send(JCPacket packet)
+void IOCP::Send(char* packet)
 {
-	/*
-	//IoData* ioData = new IoData(SEND);
-	//memcpy(ioData->buff, packet, 128);
+	IoData* ioData = new IoData(SEND);
+	memcpy(ioData->buff, packet, 128);
 
 	WSASend(tcpSocket->GetSocket(),
 		&ioData->wsaBuf,
@@ -186,7 +175,6 @@ void IOCP::Send(JCPacket packet)
 		0,
 		ioData,
 		NULL);
-		*/
 }
 
 void IOCP::Send(SOCKET destSock, char* packet)
@@ -194,7 +182,6 @@ void IOCP::Send(SOCKET destSock, char* packet)
 	printf("Send Called : %s\n", packet);
 	IoData* ioData = new IoData(SEND);
 	memcpy(ioData->buff, packet, 128);
-	
 
 	WSASend(destSock,
 		&ioData->wsaBuf,

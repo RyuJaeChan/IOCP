@@ -45,7 +45,7 @@ class IoData : public OVERLAPPED
 public:
 	IoData();
 	IoData(IoDataMode mode);
-	//~IoData();
+	~IoData();
 
 	WSABUF wsaBuf;
 	IoDataMode mode;
@@ -58,7 +58,6 @@ class IOCP
 private:
 	TCPSocketPtr tcpSocket;
 	HANDLE comPort;
-
 
 	bool acceptWorking = false;
 	void AcceptWork();
@@ -73,7 +72,7 @@ public:
 
 	bool RunServer(UINT16 portNum);
 
-	void Send(JCPacket packet);
+	void Send(char* packet);
 	void Send(SOCKET destSock, char* packet);
 
 	virtual void OnRecvPacket(SocketInfo* socketInfo, char* packet) = 0;

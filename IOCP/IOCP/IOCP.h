@@ -23,7 +23,7 @@ public:
 	char data[128];
 };
 
-class SocketInfo
+struct SocketInfo
 {
 public:
 	SocketInfo() = default;
@@ -39,34 +39,19 @@ enum IoDataMode
 	RECV
 };
 
+#define BUF_SIZE 128
 class IoData : public OVERLAPPED
 {
 public:
+	IoData();
 	IoData(IoDataMode mode);
-	~IoData();
+	//~IoData();
 
 	WSABUF wsaBuf;
 	IoDataMode mode;
-	char buff[128];
+	char buff[BUF_SIZE];
 	//JCPacket packet;
 };
-
-
-typedef struct _SOCKET_INFO
-{
-	SOCKET clientSocket;
-	SOCKADDR_IN clientAddr;
-	size_t roomId;
-} SOCKET_INFO, *LPSOCKET_INFO;
-
-//이걸 커스텀해서 써야함
-#define BUF_SIZE 128
-typedef struct _IO_DATA : public OVERLAPPED
-{
-	WSABUF wsaBuf;
-	char buffer[BUF_SIZE];
-	IoDataMode mode;
-} IO_DATA, *LPIO_DATA;
 
 class IOCP
 {
@@ -91,7 +76,7 @@ public:
 	void Send(JCPacket packet);
 	void Send(SOCKET destSock, char* packet);
 
-	virtual void OnRecvPacket(LPSOCKET_INFO socketInfo, char* packet) = 0;
+	virtual void OnRecvPacket(SocketInfo* socketInfo, char* packet) = 0;
 	virtual void OnCloseSocket() = 0;
 };
 

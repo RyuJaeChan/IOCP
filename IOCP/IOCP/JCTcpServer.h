@@ -8,7 +8,7 @@ public:
 	IOCPServer();
 	~IOCPServer();
 
-	virtual void OnRecvPacket(LPSOCKET_INFO socketInfo, char* packet);
+	virtual void OnRecvPacket(SocketInfo* socketInfo, char* packet);
 	virtual void OnCloseSocket();
 
 };

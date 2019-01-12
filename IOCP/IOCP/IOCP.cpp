@@ -6,7 +6,7 @@ SocketInfo::SocketInfo(TCPSocket sock) : sock(sock)
 }
 
 
-IoData::IoData(IoDataMode mode) : wsaBuf({sizeof(JCPacket), (char*)&packet}), mode(mode)
+IoData::IoData(IoDataMode mode) : wsaBuf({sizeof(JCPacket), buff}), mode(mode)
 {
 }
 
@@ -35,7 +35,12 @@ void IOCP::AcceptWork()
 			continue;
 		}
 		fprintf(stdout, "client connected...\n");
-		SocketInfo* socketInfo = new SocketInfo(*clientSocket);
+		//SocketInfo* socketInfo = new SocketInfo(*clientSocket);
+
+
+		//동적할당 해서 메모리에 있어야 이 후 recv/send하고 getqueue했을 때 정보를 가져올 수 있다.
+		LPSOCKET_INFO socketInfo = (LPSOCKET_INFO)calloc(1, sizeof(SOCKET_INFO));
+		socketInfo->clientSocket = clientSocket->GetSocket();
 
 		HANDLE port = CreateIoCompletionPort(
 			(HANDLE)clientSocket->GetSocket(),
@@ -49,7 +54,11 @@ void IOCP::AcceptWork()
 			continue;
 		}
 
-		IoData* ioData = new IoData(RECV);
+		//IoData* ioData = new IoData(RECV);
+		LPIO_DATA ioData = (LPIO_DATA)calloc(1, sizeof(IO_DATA));
+		ioData->wsaBuf.len = BUF_SIZE;
+		ioData->wsaBuf.buf = ioData->buffer;	//??
+		ioData->mode = RECV;
 
 		DWORD recvBytes, flags = 0;
 		WSARecv(
@@ -69,9 +78,11 @@ void IOCP::IoCompletionWork()
 	while (IoCompletionWorking)
 	{
 		DWORD bytesTrans;
-		SocketInfo* socketInfo = new SocketInfo();
-		IoData* ioData = new IoData(RECV);
+		//SocketInfo* socketInfo = new SocketInfo();
+		//IoData* ioData = new IoData(RECV);
 
+		LPSOCKET_INFO socketInfo;
+		LPIO_DATA ioData;
 
 		GetQueuedCompletionStatus(
 			comPort,
@@ -81,12 +92,13 @@ void IOCP::IoCompletionWork()
 			INFINITE);
 
 
-		fprintf(stdout, "after evt recv\n");
-		TCPSocket clientSocket = socketInfo->sock;
+		fprintf(stdout, "after evt recv : %s\n", ioData->wsaBuf.buf);
+		//TCPSocket clientSocket = socketInfo->sock;
+		SOCKET clientSocket = socketInfo->clientSocket;
 
 		if (bytesTrans == 0)    //close socket
 		{
-			closesocket(clientSocket.GetSocket());
+			closesocket(clientSocket);
 			delete socketInfo;
 			delete ioData;
 
@@ -97,14 +109,15 @@ void IOCP::IoCompletionWork()
 		if (ioData->mode == SEND)
 		{
 			//Onsend
-			delete ioData;
+			free(ioData);
 			continue;
 		}
 		else if (ioData->mode == RECV)
 		{
-			OnRecvPacket(socketInfo, ioData->packet);
+			OnRecvPacket(socketInfo, ioData->wsaBuf.buf);
+
 			DWORD flags = 0;
-			WSARecv(clientSocket.GetSocket(),
+			WSARecv(clientSocket,
 				&ioData->wsaBuf,
 				1,
 				NULL,
@@ -169,7 +182,7 @@ bool IOCP::RunServer(UINT16 portNum)
 void IOCP::Send(JCPacket packet)
 {
 	IoData* ioData = new IoData(SEND);
-	ioData->packet = packet;
+	//memcpy(ioData->buff, packet, 128);
 
 	WSASend(tcpSocket->GetSocket(),
 		&ioData->wsaBuf,
@@ -181,10 +194,17 @@ void IOCP::Send(JCPacket packet)
 
 }
 
-void IOCP::Send(SOCKET destSock, JCPacket packet)
+void IOCP::Send(SOCKET destSock, char* packet)
 {
-	IoData* ioData = new IoData(SEND);
-	ioData->packet = packet;
+	//IoData* ioData = new IoData(SEND);
+	//memcpy(ioData->buff, packet, 128);
+	printf("Send Called : %s\n", packet);
+	LPIO_DATA ioData = (LPIO_DATA)calloc(1, sizeof(IO_DATA));
+	ioData->wsaBuf.len = BUF_SIZE;
+	ioData->wsaBuf.buf = ioData->buffer;	//??
+	ioData->mode = SEND;
+
+	memcpy(ioData->buffer, packet, BUF_SIZE);
 
 	WSASend(destSock,
 		&ioData->wsaBuf,

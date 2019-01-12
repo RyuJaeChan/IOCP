@@ -9,10 +9,10 @@ IOCPServer::~IOCPServer()
 {
 }
 
-void IOCPServer::OnRecvPacket(SocketInfo * socketInfo, JCPacket packet)
+void IOCPServer::OnRecvPacket(LPSOCKET_INFO socketInfo, char* packet)
 {
-	fprintf(stdout, "OnRecvPacket Called\n");
-	Send(socketInfo->sock.GetSocket(), packet);
+	fprintf(stdout, "OnRecvPacket Called : %s\n", packet);
+	Send(socketInfo->clientSocket, packet);
 }
 
 void IOCPServer::OnCloseSocket()

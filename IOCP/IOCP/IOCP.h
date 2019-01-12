@@ -47,11 +47,26 @@ public:
 
 	WSABUF wsaBuf;
 	IoDataMode mode;
-	//char buff[128];
-	JCPacket packet;
+	char buff[128];
+	//JCPacket packet;
 };
 
 
+typedef struct _SOCKET_INFO
+{
+	SOCKET clientSocket;
+	SOCKADDR_IN clientAddr;
+	size_t roomId;
+} SOCKET_INFO, *LPSOCKET_INFO;
+
+//이걸 커스텀해서 써야함
+#define BUF_SIZE 128
+typedef struct _IO_DATA : public OVERLAPPED
+{
+	WSABUF wsaBuf;
+	char buffer[BUF_SIZE];
+	IoDataMode mode;
+} IO_DATA, *LPIO_DATA;
 
 class IOCP
 {
@@ -74,9 +89,9 @@ public:
 	bool RunServer(UINT16 portNum);
 
 	void Send(JCPacket packet);
-	void Send(SOCKET destSock, JCPacket packet);
+	void Send(SOCKET destSock, char* packet);
 
-	virtual void OnRecvPacket(SocketInfo* socketInfo, JCPacket packet) = 0;
+	virtual void OnRecvPacket(LPSOCKET_INFO socketInfo, char* packet) = 0;
 	virtual void OnCloseSocket() = 0;
 };
 

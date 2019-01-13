@@ -55,8 +55,7 @@ TCPSocket::TCPSocket(SOCKET sock, SocketAddress sockAddr) : sock(sock), sockAddr
 
 TCPSocket::~TCPSocket()
 {
-	//::closesocket(sock);
-	//::WSACleanup();
+	::closesocket(sock);
 }
 
 SOCKET TCPSocket::GetSocket()
@@ -143,4 +142,9 @@ int TCPSocket::Connect()
 	}
 
 	return SOCKET_SUCCESS;
+}
+
+void TCPSocket::CleanUp()
+{
+	::WSACleanup();
 }

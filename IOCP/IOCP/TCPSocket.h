@@ -53,6 +53,7 @@ public:
 	int Listen(int backlog = 5);
 	TCPSocket* Accept();
 	int Connect();
+	void CleanUp();
 
 };
 

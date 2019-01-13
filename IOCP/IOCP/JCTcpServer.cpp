@@ -12,7 +12,7 @@ IOCPServer::~IOCPServer()
 void IOCPServer::OnRecvPacket(SocketInfo* socketInfo, char* packet)
 {
 	fprintf(stdout, "OnRecvPacket Called : %s\n", packet);
-	Send(socketInfo->sock.GetSocket(), packet);
+	Send(socketInfo->sock->GetSocket(), packet);
 }
 
 void IOCPServer::OnCloseSocket()

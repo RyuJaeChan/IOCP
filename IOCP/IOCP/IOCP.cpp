@@ -1,7 +1,7 @@
 #include "IOCP.h"
 
 
-SocketInfo::SocketInfo(TCPSocket sock) : sock(sock)
+SocketInfo::SocketInfo(TCPSocket* sock) : sock(std::make_shared<TCPSocket>(sock->GetSocket(), sock->GetSocketAddress()))
 {
 }
 
@@ -25,9 +25,14 @@ IOCP::IOCP() : tcpSocket(std::make_shared<TCPSocket>())
 
 IOCP::~IOCP()
 {
+	acceptWorking = false;
+	ioCompletionWorking = false;
+
+
+	tcpSocket->CleanUp();
 }
 
-void IOCP::AcceptWork()
+int IOCP::AcceptWork()
 {
 	acceptWorking = true;
 	while(acceptWorking)
@@ -39,7 +44,7 @@ void IOCP::AcceptWork()
 			continue;
 		}
 		fprintf(stdout, "client connected...\n");
-		SocketInfo* socketInfo = new SocketInfo(*clientSocket);
+		SocketInfo* socketInfo = new SocketInfo(clientSocket);
 
 		HANDLE port = CreateIoCompletionPort(
 			(HANDLE)clientSocket->GetSocket(),
@@ -65,12 +70,14 @@ void IOCP::AcceptWork()
 			ioData,
 			NULL);
 	}
+
+	return 0;
 }
 
-void IOCP::IoCompletionWork()
+int IOCP::IoCompletionWork()
 {
-	IoCompletionWorking = true;
-	while (IoCompletionWorking)
+	ioCompletionWorking = true;
+	while (ioCompletionWorking)
 	{
 		DWORD bytesTrans;
 		SocketInfo* socketInfo;
@@ -84,11 +91,11 @@ void IOCP::IoCompletionWork()
 			INFINITE);
 
 		fprintf(stdout, "after evt recv : %s\n", ioData->wsaBuf.buf);
-		TCPSocket clientSocket = socketInfo->sock;
+		TCPSocketPtr clientSocket = socketInfo->sock;
 
 		if (bytesTrans == 0)    //close socket
 		{
-			closesocket(clientSocket.GetSocket());
+			//closesocket(clientSocket->GetSocket());
 			delete socketInfo;
 			delete ioData;
 
@@ -99,7 +106,7 @@ void IOCP::IoCompletionWork()
 		if (ioData->mode == SEND)
 		{
 			//Onsend
-			free(ioData);
+			delete ioData;
 			continue;
 		}
 		else if (ioData->mode == RECV)
@@ -107,7 +114,7 @@ void IOCP::IoCompletionWork()
 			OnRecvPacket(socketInfo, ioData->wsaBuf.buf);
 
 			DWORD flags = 0;
-			WSARecv(clientSocket.GetSocket(),
+			WSARecv(clientSocket->GetSocket(),
 				&ioData->wsaBuf,
 				1,
 				NULL,
@@ -116,6 +123,8 @@ void IOCP::IoCompletionWork()
 				NULL);
 		}
 	}
+
+	return 0;
 }
 
 void IOCP::InitIocp()
@@ -131,6 +140,7 @@ void IOCP::InitIocp()
 	GetSystemInfo(&sysInfo);
 	for (int i = 0; i < sysInfo.dwNumberOfProcessors; i++)
 	{
+		//ioCompFut = std::async(&IOCP::IoCompletionWork, this);
 		std::thread workThread(&IOCP::IoCompletionWork, this);
 		workThread.detach();
 	}
@@ -138,6 +148,8 @@ void IOCP::InitIocp()
 
 bool IOCP::RunServer(UINT16 portNum)
 {
+	printf("RunServer Called\n");
+
 	if (!tcpSocket->Init())
 	{
 		return false;
@@ -157,8 +169,10 @@ bool IOCP::RunServer(UINT16 portNum)
 		return false;
 	}
 
-	std::thread acpt(&IOCP::AcceptWork, this);
-	acpt.detach();
+
+	acceptFut = std::async(&IOCP::AcceptWork, this);
+	//std::thread acpt(&IOCP::AcceptWork, this);
+	//acpt.detach();
 
 	return true;
 }

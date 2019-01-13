@@ -2,6 +2,8 @@
 
 #include <memory>		//std::shared_ptr, std::make_shared()
 #include <thread>
+#include <future>		//std::future<T>, std::async()
+#include <vector>
 
 #include "TCPSocket.h"
 
@@ -28,9 +30,9 @@ struct SocketInfo
 public:
 	SocketInfo() = default;
 	~SocketInfo() = default;
-	SocketInfo(TCPSocket sock);
+	SocketInfo(TCPSocket* sock);
 
-	TCPSocket sock;
+	TCPSocketPtr sock;
 };
 
 enum IoDataMode
@@ -60,15 +62,17 @@ private:
 	HANDLE comPort;
 
 	bool acceptWorking = false;
-	void AcceptWork();
+	int AcceptWork();
+	std::future<int> acceptFut;
 
-	bool IoCompletionWorking = false;
-	void IoCompletionWork();
+	bool ioCompletionWorking = false;
+	int IoCompletionWork();
+	std::future<int> ioCompFut;
 
 	void InitIocp();
 public:
 	IOCP();
-	~IOCP();
+	virtual ~IOCP();
 
 	bool RunServer(UINT16 portNum);
 

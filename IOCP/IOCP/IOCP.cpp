@@ -5,6 +5,10 @@ SocketInfo::SocketInfo(TCPSocket* sock) : sock(std::make_shared<TCPSocket>(sock-
 {
 }
 
+SocketInfo::SocketInfo(TCPSocketPtr sock) : sock(sock)
+{
+}
+
 
 IoData::IoData()
 {
@@ -177,10 +181,55 @@ bool IOCP::RunServer(UINT16 portNum)
 	return true;
 }
 
-void IOCP::Send(char* packet)
+bool IOCP::Connect(std::string host, uint16_t portNum)
+{
+	if (!tcpSocket->Init())
+	{
+		return false;
+	}
+
+	comPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
+	if (!comPort)
+	{
+		return false;
+	}
+
+	InitIocp();
+
+	tcpSocket->SetSocket(WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED));
+	if (tcpSocket->GetSocket() == INVALID_SOCKET)
+	{
+		return false;
+	}
+
+	SocketInfo* socketInfo = new SocketInfo(tcpSocket);
+
+	CreateIoCompletionPort((HANDLE)tcpSocket->GetSocket(), comPort, (ULONG_PTR)socketInfo, 0);
+
+	SocketAddress sockAddr = SocketAddress::CreateTCPSocket(host, portNum);
+
+	WSAConnect(tcpSocket->GetSocket(), (SOCKADDR*)&sockAddr, sockAddr.addrLen, NULL, NULL, NULL, NULL);
+
+	IoData* ioData = new IoData(RECV);
+
+	DWORD recvBytes, flags = 0;
+	WSARecv(
+		tcpSocket->GetSocket(),
+		&ioData->wsaBuf,
+		1,
+		&recvBytes,
+		&flags,
+		ioData,
+		NULL);
+
+	fprintf(stdout, "connected...\n");
+	return true;
+}
+
+void IOCP::Send(const char* packet)
 {
 	IoData* ioData = new IoData(SEND);
-	memcpy(ioData->buff, packet, 128);
+	memcpy(ioData->buff, packet, BUF_SIZE);
 
 	WSASend(tcpSocket->GetSocket(),
 		&ioData->wsaBuf,
@@ -195,7 +244,7 @@ void IOCP::Send(SOCKET destSock, char* packet)
 {
 	printf("Send Called : %s\n", packet);
 	IoData* ioData = new IoData(SEND);
-	memcpy(ioData->buff, packet, 128);
+	memcpy(ioData->buff, packet, BUF_SIZE);
 
 	WSASend(destSock,
 		&ioData->wsaBuf,

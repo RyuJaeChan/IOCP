@@ -9,28 +9,13 @@
 
 using TCPSocketPtr = std::shared_ptr<TCPSocket>;
 
-
-class JCPacketHeader
-{
-public:
-	size_t packetSize;
-
-
-};
-
-
-class JCPacket
-{
-public:
-	char data[128];
-};
-
 struct SocketInfo
 {
 public:
 	SocketInfo() = default;
 	~SocketInfo() = default;
 	SocketInfo(TCPSocket* sock);
+	SocketInfo(TCPSocketPtr sock);
 
 	TCPSocketPtr sock;
 };
@@ -75,8 +60,9 @@ public:
 	virtual ~IOCP();
 
 	bool RunServer(UINT16 portNum);
+	bool Connect(std::string host, uint16_t portNum);
 
-	void Send(char* packet);
+	void Send(const char* packet);
 	void Send(SOCKET destSock, char* packet);
 
 	virtual void OnRecvPacket(SocketInfo* socketInfo, char* packet) = 0;

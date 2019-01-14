@@ -52,7 +52,7 @@ public:
 	int Bind(UINT16 portNum);
 	int Listen(int backlog = 5);
 	TCPSocket* Accept();
-	int Connect();
+	int Connect(std::string host, UINT16 portNum);
 	void CleanUp();
 
 };

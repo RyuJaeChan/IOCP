@@ -133,14 +133,17 @@ TCPSocket* TCPSocket::Accept()
 	return new TCPSocket(clientSock, clientAddr);
 }
 
-int TCPSocket::Connect()
+int TCPSocket::Connect(std::string host, UINT16 portNum)
 {
-	if (::connect(sock, (SOCKADDR*)&sockAddr, sockAddr.addrLen) == SOCKET_ERROR)
+	SocketAddress sockAddress = SocketAddress::CreateTCPSocket(host, portNum);
+
+	if (::connect(sock, (SOCKADDR*)&sockAddress, sockAddress.addrLen) == SOCKET_ERROR)
 	{
 		SocketUtil::GetLastSocketError();
 		return SOCKET_FAIL;
 	}
 
+	sockAddr = sockAddress;
 	return SOCKET_SUCCESS;
 }
 

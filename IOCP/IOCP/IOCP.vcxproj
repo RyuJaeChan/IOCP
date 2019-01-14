@@ -116,13 +116,17 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="IOCP.cpp" />
+    <ClCompile Include="JCPacket.cpp" />
     <ClCompile Include="JCTcpServer.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="SerializeStream.cpp" />
     <ClCompile Include="TCPSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IOCP.h" />
+    <ClInclude Include="JCPacket.h" />
     <ClInclude Include="JCTcpServer.h" />
+    <ClInclude Include="SerializeStream.h" />
     <ClInclude Include="TCPSocket.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

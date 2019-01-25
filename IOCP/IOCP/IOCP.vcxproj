@@ -124,6 +124,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="IOCP.h" />
+    <ClInclude Include="JCLock.h" />
     <ClInclude Include="JCPacket.h" />
     <ClInclude Include="JCTcpServer.h" />
     <ClInclude Include="SerializeStream.h" />

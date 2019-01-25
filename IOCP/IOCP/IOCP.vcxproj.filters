@@ -50,5 +50,8 @@
     <ClInclude Include="JCPacket.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="JCLock.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
